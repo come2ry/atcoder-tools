@@ -63,7 +63,7 @@ def default_credential_supplier() -> Tuple[str, str]:
     return username, password
 
 
-class AtCoderClient(metaclass=Singleton):
+class AtCoderClient():
 
     def __init__(self):
         self._session = requests.Session()
