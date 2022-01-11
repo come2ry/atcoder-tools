@@ -48,8 +48,7 @@ def _message_on_execution(cwd: str, cmd: str):
     return "Executing the following command in `{}`: {}".format(cwd, cmd)
 
 
-def prepare_procedure(atcoder_client: AtCoderClient,
-                      problem: Problem,
+def prepare_procedure(problem: Problem,
                       config: Config):
     workspace_root_path = config.code_style_config.workspace_dir
     template_code_path = config.code_style_config.template_file
@@ -81,6 +80,9 @@ def prepare_procedure(atcoder_client: AtCoderClient,
 
     # Fetch problem data from the statement
     try:
+        atcoder_client = AtCoderClient()
+        atcoder_client.login(
+            save_session_cache=not config.etc_config.save_no_session_cache)
         content = atcoder_client.download_problem_content(problem)
     except InputFormatDetectionError as e:
         emit_error("Failed to download input format.")
@@ -165,13 +167,12 @@ def prepare_procedure(atcoder_client: AtCoderClient,
     output_splitter()
 
 
-def func(argv: Tuple[AtCoderClient, Problem, Config]):
-    atcoder_client, problem, config = argv
-    prepare_procedure(atcoder_client, problem, config)
+def func(argv: Tuple[Problem, Config]):
+    problem, config = argv
+    prepare_procedure(problem, config)
 
 
-def prepare_contest(atcoder_client: AtCoderClient,
-                    contest_id: str,
+def prepare_contest(contest_id: str,
                     config: Config,
                     retry_delay_secs: float = 1.5,
                     retry_max_delay_secs: float = 60,
@@ -179,6 +180,9 @@ def prepare_contest(atcoder_client: AtCoderClient,
     attempt_count = 1
     while True:
         try:
+            atcoder_client = AtCoderClient()
+            atcoder_client.login(
+                save_session_cache=not config.etc_config.save_no_session_cache)
             problem_list = atcoder_client.download_problem_list(
                 Contest(contest_id=contest_id))
             break
@@ -191,8 +195,7 @@ def prepare_contest(atcoder_client: AtCoderClient,
             retry_delay_secs = min(retry_delay_secs * 2, retry_max_delay_secs)
             attempt_count += 1
 
-    tasks = [(atcoder_client,
-              problem,
+    tasks = [(problem,
               config) for
              problem in problem_list]
 
@@ -328,8 +331,7 @@ def main(prog, args):
     else:
         logger.info("Downloading data without login.")
 
-    prepare_contest(client,
-                    args.contest_id,
+    prepare_contest(args.contest_id,
                     config)
 
 
